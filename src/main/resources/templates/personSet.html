@@ -1,0 +1,341 @@
+<html>
+<meta charset="utf-8">
+<head>
+    <meta charset="utf-8" />
+    <title>index</title>
+    <meta name="description" content="Stagb Admin Template" />
+    <meta name="keywords" content="html5, ,semantic,ui, library, framework, javascript,jquery,,stagb,template" />
+    <link href="css/semantic.min.css" rel="stylesheet" />
+    <script src="js/jquery.min.js"></script>
+    <script src="js/semantic.min.js"></script>
+    <script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/md5.js"></script>
+</head>
+<body>
+<div>
+    <div id="top_nav" class="ui top stackable attached inverted menu">
+        <a class="item left"  onclick="ShowNav()">
+            <i class="list layout icon"></i>
+            菜单
+        </a>
+        <a class="item right" id="user_name">
+            {{username}}
+        </a>
+        <a class="item right" @click="SignOut">
+            <i class="sign out icon"></i>
+            登出
+        </a>
+    </div>
+
+    <div id="show_data" class="ui sidebar inverted vertical menu">
+        <ul id="show_nav">
+            <li v-for="nav in navs">
+                <a :href="nav.url"  class="item">{{nav.name}}</a>
+
+            </li>
+
+        </ul>
+    </div>
+
+    <div  class="pusher">
+        <div  id="person_setting" class="ui equal width left aligned padded grid stackable">
+            <!--Site Content-->
+            <!--Site Content-->
+
+            <div class="sixteen wide tablet two wide computer column">
+                <div class="ui vertical secondary pointing fluid tabular menu">
+                    <a class="item active" data-tab="profile" @click="UserProfile">
+                        基础信息
+                    </a>
+                    <a class="item" data-tab="security" @click="UserSecurity">
+                        账号安全
+                    </a>
+                </div>
+            </div>
+            <div class="sixteen wide tablet fourteen wide computer column">
+                <div class="ui segment">
+                    <div class="ui tab active" data-tab="profile">
+
+                        <div class="ui form segment">
+                            <h3 class="ui header">
+                                基础信息
+                            </h3>
+                            <div class="ui hidden divider"></div>
+                            <div class="two fields">
+                                <div class="field">
+                                    <label>姓名</label>
+                                    <input placeholder="你的姓名" name="name" v-model="username" type="text">
+                                </div>
+                                <div class="field">
+                                    <label>性别</label>
+                                    <div class="ui fluid selection" tabindex="0">
+                                        <select name="sex" v-model="sex">
+                                            <option value="男">男</option>
+                                            <option value="女">女</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="two fields">
+                                <div class="field">
+                                    <label>年龄</label>
+                                    <input placeholder="年龄" v-model="age" name="age" type="text">
+                                </div>
+                                <div class="field">
+                                    <label>家庭住址</label>
+                                    <input type="text" v-model="hometown" name="hometown">
+                                </div>
+                            </div>
+                            <div class="ui blue submit button" @click="UpdateProfile">更新</div>
+                        </div>
+                    </div>
+
+                    <div class="ui tab" data-tab="security">
+                        <form class="ui form segment">
+                            <h3 class="ui header">
+                                密码设置
+                            </h3>
+                            <div class="ui hidden divider"></div>
+                            <div class="field">
+                                <label>旧密码</label>
+                                <input placeholder="旧密码" v-model="oldpassword" name="oldpassword" type="password">
+                            </div>
+                            <div class="field">
+                                <label>新密码</label>
+                                <input placeholder="新密码" v-model="newpassword1" value="" name="newpassword1" type="password">
+                            </div>
+                            <div class="field">
+                                <label>再次输入密码</label>
+                                <input placeholder="再次输入" v-model="newpassword2" name="newpassword2" type="password">
+                            </div>
+
+                            <div class="ui blue submit button" @click="UpdatePassword">更新</div>
+                            <!--
+                                <div class="ui red submit button">删除账号</div>
+                            -->
+                            <div class="ui message">
+                                {{msg}}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="ui small modal" id="tip_window">
+        <div class="header">
+            提示
+        </div>
+        <div class="content">
+            <p>
+                {{msg}}
+            </p>
+        </div>
+        <div class="actions">
+            <div class="ui button">
+                好的
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+
+<script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+<script  type="text/javascript">
+    $(document).ready(function(){
+        $('.menu .item')
+            .tab()
+        ;
+    });
+
+    function  ShowNav() {
+        $('.ui.sidebar')
+            .sidebar('toggle')
+        ;
+    }
+</script>
+
+<script type="text/javascript">
+    var person_setting = new Vue({
+        el:"#person_setting",
+        data:{
+            uid:"",
+            username:"",
+            sex:"",
+            age:"",
+            hometown:"",
+            oldpassword:"",
+            newpassword1:"",
+            newpassword2:"",
+            msg:""
+        },
+        mounted(){
+            axios.get('/users/getlogindata')
+                .then(response=>{
+                    if(response.data.code > 0){
+                        let getdata = response.data.data[0];
+                        this.username = getdata.username;
+                        this.uid = getdata.uid;
+                        this.age = getdata.age;
+                        this.hometown = getdata.hometown;
+                        this.sex = getdata.sex;
+                    }
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+            UserProfile:function(){
+                axios.get('/users/getlogindata')
+                    .then(response=>{
+                        if(response.data.code > 0){
+                            let getdata = response.data.data[0];
+                            this.username = getdata.username;
+                            this.uid = getdata.uid;
+                            this.age = getdata.age;
+                            this.hometown = getdata.hometown;
+                            this.sex = getdata.sex;
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+            },
+            UserSecurity:function(){
+
+            },
+            UpdateProfile:function(){
+                postdata = {
+                    "username":this.username,
+                    "age":this.age,
+                    "sex":this.sex,
+                    "hometown":this.hometown
+                }
+                axios.post("/users/updateselfaccount",postdata).then(response=> {
+                    if(response.data.code > 0){
+                        alert(response.data.msg);
+                    }else {
+                        alert(response.data.msg);
+                    }
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            UpdatePassword:function(){
+                if(this.newpassword2 == this.newpassword1) {
+                    postdata = {
+                        "username":this.username,
+                        "oldpassword":hex_md5(this.oldpassword),
+                        "password":hex_md5(this.newpassword2)
+                    }
+                    axios.post("/users/updatepassword",postdata).then(response=> {
+                        if(response.data.code > 0){
+                            alert("修改成功 请重新登录");
+                            axios.get('/signout')
+                                .then(response=> {
+                                    let code = response.data.code;
+                                    if(code==1){
+                                        window.location.href="/index";
+                                    }
+                                })
+                                .catch(function(error){
+                                    alert(error);
+                                });
+                        }else {
+                            alert(response.data.msg);
+                        }
+                    }).catch(error=>{
+                        alert(error);
+                    });
+                }
+            }
+        },
+        watch:{
+            newpassword1: {
+                handler(val, oldVal) {
+                    if(val !=this.newpassword2){
+                        this.msg = "两次密码输入不一致";
+                    }else{
+                        this.msg = "";
+                    }
+                },
+                immediate: true
+            },
+            newpassword2:{
+                handler(val, oldVal) {
+                    if(val !=this.newpassword1){
+                        this.msg = "两次密码输入不一致";
+                    }else{
+                        this.msg = "";
+                    }
+                },
+                immediate: true
+            }
+        }
+    });
+
+</script>
+
+
+<script type="text/javascript">
+
+    var side_nav = new Vue({
+        el: '#show_nav',
+        data :{
+            navs:[{url : "index",name: "后台首页"}]
+        },
+        mounted(){
+            axios.get('/getnavbygroups')
+                .then(response=>(this.navs = response.data))
+                .catch(function(error){
+                    alert(error);
+                });
+        }
+    });
+
+    var top_nav = new Vue({
+        el: '#top_nav',
+        data :{
+            username:""
+        },
+        mounted(){
+            axios.get('/getuloginname')
+                .then(response=>{
+                    if(response.data.code==-1){
+                        alert("未登录账号！");
+                        window.location.href="/login";
+                    }
+                    this.username = response.data.msg;
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+            SignOut:function(){
+                axios.get('/signout')
+                    .then(response=> {
+                        let code = response.data.code;
+                        alert(response.data.msg);
+                        if(code==1){
+                            window.location.href="/index";
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+
+            }
+        }
+
+
+    });
+
+</script>
+</html>

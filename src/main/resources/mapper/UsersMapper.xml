@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.sm.mapper.UsersMapper">
+    <select id="GetAll" resultType="cn.sm.pojo.Users">
+        SELECT * FROM t_users
+    </select>
+
+    <select id="GetUserByID" parameterType="int" resultType="cn.sm.pojo.Users">
+        SELECT * FROM t_users WHERE uid=#{id}
+    </select>
+
+    <select id="GetUserByArg" parameterType="cn.sm.pojo.Users" resultType="cn.sm.pojo.Users">
+        SELECT * FROM t_users WHERE 1=1 <if test="uid!=0"> and uid = #{uid}</if>
+                                        <if test="schoolid!=0"> and schoolid = #{schoolid}</if>
+                                        <if test="username!=null"> and username LIKE CONCAT('%',#{username},'%') </if>
+                                        <if test="uclass!=null"> and uclass LIKE CONCAT('%',#{uclass},'%') </if>
+                                        <if test="groups!=null"> and groups = #{groups} </if>
+                                        <if test="department!=null"> and department LIKE CONCAT('%',#{department},'%') </if>
+    </select>
+
+    <select id="CheckUserLogin" parameterType="cn.sm.pojo.Users" resultType="cn.sm.pojo.Users">
+        SELECT uid,username,groups FROM t_users WHERE
+        <if test="username!=null">username=#{username}</if>
+        <if test="schoolid!=0">schoolid=#{schoolid}</if>
+         AND password=#{password}
+    </select>
+
+    <insert id="InsertUserAccount" parameterType="cn.sm.pojo.Users">
+		INSERT INTO t_users(username,password,schoolid,sex,age,hometown,uclass,department,validatekey,created,activated,groups)
+		VALUE (#{username},#{password},#{schoolid},#{sex},#{age},#{hometown},#{uclass},#{department},#{validatekey},#{created},#{activated},#{groups})
+	</insert>
+
+    <delete id="DeleteUser" parameterType="cn.sm.pojo.Users">
+           delete from t_users where uid = #{uid};
+   </delete>
+
+    <!-- 对应userDao中的updateUser方法 -->
+    <update id="UpdateUser" parameterType="cn.sm.pojo.Users">
+           update t_users
+           set  <if test="username!=null">username=#{username},</if>
+                <if test="password!=null">password = #{password},</if>
+                <if test="age!=0">age = #{age},</if>
+                <if test="sex!=null">sex = #{sex},</if>
+                <if test="schoolid!=0">schoolid = #{schoolid},</if>
+                <if test="hometown!=null">hometown = #{hometown},</if>
+                <if test="uclass!=null">uclass=#{uclass},</if>
+                <if test="department!=null">department=#{department},</if>
+                uid = uid
+               where uid = #{uid};
+   </update>
+</mapper>

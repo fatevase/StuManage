@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.sm.mapper.CoursesMapper">
+    <select id="GetAll" resultType="cn.sm.pojo.Courses">
+        SELECT * FROM t_courses
+    </select>
+
+    <select id="GetCourseByID" parameterType="int" resultType="cn.sm.pojo.Courses">
+        SELECT * FROM t_courses WHERE coid=#{id}
+    </select>
+
+    <select id="GetCourseByArg" parameterType="cn.sm.pojo.Users" resultType="cn.sm.pojo.Courses">
+        SELECT * FROM t_courses WHERE 1=1 <if test="coid!=0"> and coid = #{coid}</if>
+                                        <if test="coursename!=null"> and coursename LIKE CONCAT('%',#{coursename},'%')</if>
+                                        <if test="coursecredit!=null"> and coursecredit LIKE CONCAT('%',#{coursecredit},'%') </if>
+                                        <if test="teachername!=null"> and teachername LIKE CONCAT('%',#{teachername},'%') </if>
+                                        <if test="teacherid!=null"> and teacherid = #{teacherid} </if>
+    </select>
+
+
+        <insert id="InsertCourse" parameterType="cn.sm.pojo.Courses">
+		INSERT INTO t_courses(coursename,coursecredit,teachername,teacherid)
+		VALUE (#{coursename},#{coursecredit},#{teachername},#{teacherid})
+	</insert>
+
+    <delete id="DeleteCourse" parameterType="cn.sm.pojo.Courses">
+           delete from t_courses where coid = #{coid};
+   </delete>
+
+    <update id="UpdateCourse" parameterType="cn.sm.pojo.Courses">
+           update t_courses set
+                <if test="coursename!=null">coursename = #{coursename},</if>
+                <if test="coursecredit!=null">coursecredit = #{coursecredit},</if>
+                <if test="teachername!=null">teachername=#{teachername},</if>
+                <if test="teacherid!=0">teacherid=#{teacherid},</if>
+                coid = coid
+               where coid = #{coid};
+   </update>
+</mapper>

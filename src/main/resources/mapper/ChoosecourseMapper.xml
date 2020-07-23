@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.sm.mapper.ChooseCourseMapper">
+    <select id="GetAll" resultType="cn.sm.pojo.ViewBean">
+         select t_choosecourse.* ,t_users.username,t_courses.coursename,t_courses.coursecredit
+         from t_choosecourse left join t_courses on t_choosecourse.coid=t_courses.coid left join t_users on t_choosecourse.uid=t_users.uid;
+    </select>
+
+    <select id="GetChooseByID" parameterType="int" resultType="cn.sm.pojo.ViewBean">
+        select t_choosecourse.* ,t_users.username,t_courses.coursename,t_courses.coursecredit
+         from t_choosecourse left join t_courses on t_choosecourse.coid=t_courses.coid left join t_users on t_choosecourse.uid=t_users.uid
+         where t_choosecourse.ccid=#{id};
+    </select>
+
+    <select id="GetChooseByArg" parameterType="cn.sm.pojo.ViewBean" resultType="cn.sm.pojo.ViewBean">
+        select t_choosecourse.* ,t_users.username,t_courses.coursename,t_courses.coursecredit,t_courses.teachername
+        from t_choosecourse left join t_courses on t_choosecourse.coid=t_courses.coid left join t_users on t_choosecourse.uid=t_users.uid
+         WHERE 1=1 <if test="uid!=0"> and t_users.uid = #{uid}</if>
+        <if test="coid!=0"> and t_courses.coid = #{coid}</if>
+        <if test="username!=null"> and t_users.username LIKE CONCAT('%',#{username},'%') </if>
+        <if test="starttime!=0"> and t_choosecourse.starttime = #{starttime} </if>
+        <if test="endtime!=0"> and t_choosecourse.starttime = #{endtime} </if>
+        <if test="coursename!=null"> and t_courses.coursename LIKE CONCAT('%',#{coursename},'%') </if>
+    </select>
+
+    <insert id="InsertChoose" parameterType="cn.sm.pojo.ChooseCourse">
+		INSERT INTO t_choosecourse(uid,coid,starttime,endtime,chosetime) VALUE (#{uid},#{coid},#{starttime},#{endtime},#{choosetime})
+	</insert>
+
+
+    <delete id="DeleteChoose" parameterType="cn.sm.pojo.ChooseCourse">
+           DELETE FROM t_choosecourse WHERE ccid = #{ccid};
+   </delete>
+
+    <update id="UpdateChoose" parameterType="cn.sm.pojo.ChooseCourse">
+        update t_choosecourse set
+        <if test="coid!=0">coid = #{coid},</if>
+        <if test="uid!=0">uid = #{uid},</if>
+        <if test="starttime!=0">starttime = #{starttime},</if>
+        <if test="endtime!=0">endtime = #{endtime},</if>
+        <if test="choosetime!=0">choosetime = #{chosetime},</if>
+        ccid = ccid where
+        <choose>
+            <when test="ccid!=0">
+                ccid = #{ccid};
+            </when>
+            <otherwise>
+
+                <choose>
+                    <when test="coid!=0">
+                        coid = #{coid};
+                    </when>
+                    <otherwise>
+                        uid = #{uid};
+                    </otherwise>
+                </choose>
+
+            </otherwise>
+        </choose>
+
+    </update>
+</mapper>

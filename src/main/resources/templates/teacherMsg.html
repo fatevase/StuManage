@@ -1,0 +1,506 @@
+<html>
+<meta charset="utf-8">
+<head>
+    <meta charset="utf-8" />
+    <title>index</title>
+    <link href="css/semantic.min.css" rel="stylesheet" />
+    <link href="css/mystyle.css" rel="stylesheet" />
+    <script src="js/jquery.min.js"></script>
+    <script src="js/semantic.min.js"></script>
+    <script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/md5.js"></script>
+    <script src="js/util.js"></script>
+</head>
+<body>
+<div>
+    <div id="top_nav" class="ui top stackable attached inverted menu">
+        <a class="item left"  onclick="ShowNav()">
+            <i class="list layout icon"></i>
+            菜单
+        </a>
+        <a class="item right" id="user_name">
+            {{username}}
+        </a>
+        <a class="item right" @click="SignOut">
+            <i class="sign out icon"></i>
+            登出
+        </a>
+    </div>
+
+    <div id="show_data" class="ui sidebar inverted vertical menu">
+        <ul id="show_nav">
+            <li v-for="nav in navs">
+                <a :href="nav.url"  class="item">{{nav.name}}</a>
+
+            </li>
+
+        </ul>
+    </div>
+
+    <div  class="pusher">
+
+        <div class="ui equal width left aligned padded grid stackable">
+            <!--Site Content-->
+            <!--Site Content-->
+
+            <div id="teacher_basic_msg" class="sixteen wide tablet sixteen wide computer column teacherheader row no-padding">
+                <div class="column left floated" style="margin-top:40px">
+                    <div class="ui items">
+                        <div class="item">
+                            <div class="middle aligned content">
+                                <div class="header" style="color:floralwhite">
+                                    <i class="like icon"></i>
+                                    {{username}}老师，你好！
+                                </div>
+                                <div class="meta">
+                                    教师选课页面 <i class="icon map marker"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column hiddenui" style="margin-top:40px">
+                    <div class="description right aligned">
+                        <h3 style="color:floralwhite">个人基本信息</h3>
+                        <div class="ui divider"></div>
+                        <ul >
+                            <li v-for="data in basic_data">
+                                <a class="ui red tag label">{{data}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="ui menu fluid" style="margin-top:0;">
+                <div class="ui menu">
+                    <a class="item floated right">
+                        <div class="ui mini statistic">
+                            <div class="value" id="selectnumber">
+                                0
+                            </div>
+                            <div class="label">
+                                授课数量
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+
+            <div id="choose_basic" class="row">
+                <div class="sixteen wide tablet ten wide computer column">
+                    <div class="ui segments">
+                        <div class="ui segment">
+                            <h3 class="ui header">课程列表</h3>
+                        </div>
+                        <div class="ui segment">
+                            <table class="ui single line table">
+                                <thead>
+                                <tr>
+                                    <th v-for="key in columns">
+                                        {{ key }}
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="course in all_course">
+                                    <td v-for="key in list_key">
+                                        {{course[key]}}
+                                    </td>
+                                    <td style="width:120px;">
+                                        <button v-if="course.status" class="ui teal button"  @click="SelectCourse(course.coid,course.coursename)">授课</button>
+                                        <button v-else="" class="ui disabled teal button" >已选择</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="sixteen wide tablet six wide computer column">
+                    <div class="ui segments">
+                        <div class="ui segment">
+                            <h3 class="ui header">授课列表</h3>
+                        </div>
+                        <div class="ui segment">
+                            <div class="ui items" v-for="choose in selected_course">
+
+                                <div class="item">
+                                    <div class="content">
+                                        <a class="header"
+                                           @click="SelectCourse(choose.coid,choose.coursename,choose.starttime,choose.endtime)">
+                                            {{choose.coursename}}
+                                        </a>
+                                        <div class="meta">
+                                            <p>学分: {{choose.coursecredit}}</p>
+                                        </div>
+                                        <div class="description">
+                                            <span class="cinema">{{choose.starttime}}</span>-
+                                            <span class="cinema">{{choose.endtime}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="ui small modal" id="pop_windows">
+        <i class="close icon" onclick="closeBox()"> </i>
+        <div class="header">
+            选课管理
+        </div>
+        <div class="content">
+            <div class="ui form" id="choose_form" method="post" action="javascript:void(0)">
+                <div class="">
+                    <div class="field">
+                        <p>课程名:{{coursename}}</p>
+                    </div>
+                    <div class="field">
+                        授课时间：<input name="starttime" v-model="starttime" type="text" placeholder="选课时间"/>
+                    </div>
+                    <div class="field">
+                        结课时间：<input name="endtime" v-model="endtime" type="text" placeholder="结课时间"/>
+                    </div>
+                    <div class="ui message" id="sign-form-error"></div>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <button  class="ui green ok button"  @click="SecDecide">确定</button>
+            <button  class="ui red cancel button">取消</button>
+        </div>
+    </div>
+
+
+    <div class="ui small modal" id="tip_window">
+        <div class="header">
+            提示
+        </div>
+        <div class="content">
+            <p>
+                {{msg}}
+            </p>
+        </div>
+        <div class="actions">
+            <div class="ui button">
+                好的
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+<script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+<script  type="text/javascript">
+    function  ShowNav() {
+        $('.ui.sidebar')
+            .sidebar('toggle')
+        ;
+    }
+    /*点击弹出按钮*/
+    function popBox() {
+        $('#pop_windows')
+            .modal({
+                closable  : false,
+                onDeny    : function(){
+                    EmptyBox();
+                    return true;
+
+                },
+                onApprove : function() {
+                    EmptyBox();
+                    return true;
+                }
+            })
+            .modal('setting', 'transition', 'scale')
+            .modal('toggle', '.ui .modal')
+        ;
+    }
+    function closeBox(){
+        $('#pop_windows')
+            .modal('setting', 'transition', 'scale')
+            .modal('hide', '.ui .modal')
+        ;
+        EmptyBox();
+    }
+    function ShowSelectNumber(number){
+        var target = document.getElementById("selectnumber");
+        target.innerHTML = number;
+    }
+</script>
+
+<script>
+    var teacher_basic_show = new  Vue({
+        el:'#teacher_basic_msg',
+        data:{
+            username:"",
+            basic_data:[]
+        },
+        mounted(){
+            axios.get('/users/getlogindata')
+                .then(response=>{
+                    if(response.data.code > 0){
+                        let getdata = response.data.data[0];
+                        this.username = getdata.username;
+                        getdata.schoolid = "教师编号:"+getdata.schoolid;
+                        getdata.department = "所属院系:"+getdata.department;
+                        getdata.uclass = "所在组:"+getdata.uclass;
+                        delete getdata.username;delete getdata.sex;
+                        delete getdata.uid;delete getdata.age;
+                        delete getdata.hometown;
+                        this.basic_data = getdata;
+                    }
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+
+        }
+    });
+
+    var choose_basic_show = new  Vue({
+        el:'#choose_basic',
+        data:{
+            all_course:[],
+            selected_course:[],
+            columns :["课程名","课程学分",""],
+            list_key :["coursename","coursecredit"],
+        },
+        mounted(){
+            axios.get('/course/getselectedcourse')
+                .then(response=>{
+                    if(response.data.code > 0){
+                        let getdata = response.data.data;
+                        for(let i =0; i < getdata.length;i++) {
+                            getdata[i].starttime = UnixToDate(getdata[i].starttime);
+                            getdata[i].endtime = UnixToDate(getdata[i].endtime);
+                        }
+                        this.selected_course = getdata;
+                        ShowSelectNumber(getdata.length);
+                    }
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+
+            axios.get('/course/getall')
+                .then(response=>{
+                    if(response.data){
+                        let getdata = response.data;
+                        for(let i = 0; i < getdata.length;i++){
+                            if(getdata[i].teacherid<1){
+                                getdata[i]["status"] = true;
+                            }
+                        }
+                        this.all_course = getdata;
+                    }
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+            SelectCourse:function(coid,coursename,starttime="",endtime=""){
+                Msg_popBox.$data.courseid = coid;
+                Msg_popBox.$data.coursename = coursename;
+                Msg_popBox.$data.starttime = starttime;
+                Msg_popBox.$data.endtime = endtime;
+                popBox();
+            },
+            FreshTable:function(){
+                axios.get('/course/getselectedcourse')
+                    .then(response=>{
+                        if(response.data.code > 0){
+                            let getdata = response.data.data;
+                            this.selected_course = getdata;
+                            for(let i =0; i < getdata.length;i++) {
+                                getdata[i].starttime = UnixToDate(getdata[i].starttime);
+                                getdata[i].endtime = UnixToDate(getdata[i].endtime);
+                            }
+                            ShowSelectNumber(getdata.length);
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+
+                axios.get('/course/getall')
+                    .then(response=>{
+                        if(response.data){
+                            let getdata = response.data;
+                            for(let i = 0; i < getdata.length;i++){
+                                if(getdata[i].teacherid==0){
+                                    getdata[i]["status"] = true;
+                                }
+                            }
+                            this.all_course = getdata;
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+            },
+        },
+        computed:{
+            watch_handle(){
+                const { all_course, selected_course } = this
+                return {
+                    all_course,
+                    selected_course,
+                }
+            }
+        },
+        watch:{
+            all_course: {
+                handler(val, oldVal) {
+                    let all_courseid = [];
+                    for(let i =  0; i < this.selected_course.length;i++){
+                        all_courseid[i] = this.selected_course[i].coid;
+                    }
+                    for(let i =0; i < val.length;i++){
+                        if(all_courseid.includes(val[i].coid)){
+                            val[i]["selected"] = true;
+                        }else{
+                            val[i]["selected"] = false;
+                        }
+                    }
+                },
+                immediate: true
+            },
+            selected_course:{
+                handler(val, oldVal) {
+                    let all_courseid = [];
+                    for(let i =  0; i < val.length;i++){
+                        all_courseid[i] = val[i].coid;
+                    }
+                    for(let i =0; i < this.all_course.length;i++){
+                        if(all_courseid.includes(this.all_course.coid)){
+                            this.all_course[i]["selected"] = true;
+                        }else{
+                            this.all_course[i]["selected"] = false;
+                        }
+                    }
+                },
+                immediate: true
+            }
+        }
+    });
+
+    var Msg_popBox = new Vue({
+        el:'#pop_windows',
+        data:{
+            coursename :"",
+            decidebutton:"",
+            courseid:"",
+            starttime:"",
+            endtime:""
+        },
+        mounted(){
+            window.EmptyBox = this.EmptyBox;     //方法赋值给window
+        },
+        methods:{
+            SecDecide:function(){
+                if(this.courseid>0&&this.courseid!=""&&this.coursename.length>0) {
+                    postdata = {"coid": this.courseid,
+                        "starttime":DataToUnix(this.starttime),
+                        "endtime":DataToUnix(this.endtime)
+                    }
+
+                    axios.post("/course/teachcourse", postdata).then(response => {
+                        if (response.data.code > 0) {
+                            choose_basic_show.FreshTable();
+                        } else {
+                            alert(response.data.msg);
+                        }
+                    }).catch(error => {
+                        alert(error);
+                    });
+                }
+
+            },
+            EmptyBox:function(){
+                //document.getElementById("user_form").reset();
+                this.coursename ="";this.courseid="";
+                this.decidebutton ="";this.endtime="";
+                this.starttime="";
+            },
+
+        }
+    });
+
+</script>
+
+<script type="text/javascript">
+
+    var side_nav = new Vue({
+        el: '#show_nav',
+        data :{
+            navs:[{url : "index",name: "后台首页"}]
+        },
+        mounted(){
+            axios.get('/getnavbygroups')
+                .then(response=>(this.navs = response.data))
+                .catch(function(error){
+                    alert(error);
+                });
+        }
+
+    });
+
+    var top_nav = new Vue({
+        el: '#top_nav',
+        data :{
+            username:""
+
+        },
+        mounted(){
+            axios.get('/getuloginname')
+                .then(response=>{
+                    if(response.data.code==-1){
+                        alert("未登录账号！");
+                        window.location.href="/login";
+                    }
+                    this.username = response.data.msg;
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+            SignOut:function(){
+                axios.get('/signout')
+                    .then(response=> {
+                        let code = response.data.code;
+                        alert(response.data.msg);
+                        if(code==1){
+                            window.location.href="/index";
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+
+            }
+        }
+
+
+    });
+
+</script>
+</html>

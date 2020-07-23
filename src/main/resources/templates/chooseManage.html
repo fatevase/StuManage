@@ -1,0 +1,409 @@
+<html>
+<meta charset="utf-8">
+<head>
+    <meta charset="utf-8" />
+    <title>选课管理</title>
+    <meta name="description" content="Stagb Admin Template" />
+    <meta name="keywords" content="html5, ,semantic,ui, library, framework, javascript,jquery,,stagb,template" />
+    <link href="css/semantic.min.css" rel="stylesheet" />
+    <script src="js/jquery.min.js"></script>
+    <script src="js/semantic.min.js"></script>
+    <script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/md5.js"></script>
+    <script src="js/util.js"></script>
+</head>
+
+<div>
+    <div id="top_nav" class="ui top stackable attached inverted menu">
+        <a class="item left"  onclick="ShowNav()">
+            <i class="list layout icon"></i>
+            菜单
+        </a>
+        <a class="item right" id="user-name">
+            {{username}}
+        </a>
+        <a class="item right" @click="SignOut">
+            <i class="sign out icon"></i>
+            登出
+        </a>
+    </div>
+
+    <div id="show_data" class="ui sidebar inverted vertical menu">
+        <ul id="show_nav">
+            <li v-for="nav in navs">
+                <a :href="nav.url"  class="item">{{nav.name}}</a>
+
+            </li>
+
+        </ul>
+    </div>
+
+
+    <div  class="pusher">
+        <div>
+            <button class="ui button item right" onclick="popBox()">添加选课信息</button>
+        </div>
+        <div class="ui form" id="choose_table">
+            <div class="field">
+                <div class="three fields">
+                    <div class="field">
+                        <input class="ui search dropdown" name="arg_value" v-model="arg_value"  placeholder="输入查询值"/>
+                    </div>
+                    <div class="field">
+                        <select name="select_arg" v-model="select_arg" >
+                            <option value="coursename" >课程名</option>
+                            <option value="coursecredit" >课程学分</option>
+                            <option value="teachername" >教师名</option>
+                            <option value="username" >用户名</option>
+                            <option value="uid" >用户编号</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <button class="ui button" @click="SelectChooseByArg" >查询</button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="ui single line table">
+                <thead>
+                <tr>
+                    <th v-for="key in columns">
+                        {{ key }}
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="entry in all_data">
+                    <td v-for="key in list_key">
+                        {{entry[key]}}
+                    </td>
+                    <td><button class="ui button" @click="ChooseManage(entry.ccid)" >操作</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+
+
+<div class="ui small modal" id="pop_windows">
+    <i class="close icon" onclick="closeBox()"> </i>
+    <div class="header">
+        选课管理
+    </div>
+    <div class="content">
+        <form id="choose_form" method="post" action="javascript:void(0)">
+            <div class="ui form stacked segment">
+                <div class="field">
+                    学生ID： <input name="uid" v-model="uid" type="text"  placeholder="学生ID"/>
+                </div>
+                <div class="field">
+                    课程：
+                    <select name="coid" v-model="coid" @change="GetCourseSelected">
+                        <option :value="course.coid" v-for="course in courselist">{{course.coursename}}</option>
+                    </select>
+                </div>
+                <div class="field">
+                    选课时间：<input name="starttime" v-model="starttime" type="text" placeholder="选课时间"/>
+                </div>
+                <div class="field">
+                    结课时间：<input name="endtime" v-model="endtime" type="text" placeholder="结课时间"/>
+                </div>
+
+                <div class="ui  error message" display="none" id="sign-form-error"></div>
+            </div>
+        </form>
+
+    </div>
+    <div class="actions">
+        <button  class="ui green ok button"  @click="UpdateChoose" v-if="ccid">更新</button>
+        <button  class="ui green ok button"  @click="InsertChoose" v-else="">添加</button>
+        <button  class="ui red cancel button"  @click="DeleteChoose"  v-if="ccid">删除</button>
+    </div>
+</div>
+
+</div>
+
+
+<script>
+    function  ShowNav() {
+        $('.ui.sidebar')
+            .sidebar('toggle')
+        ;
+    }
+    /*点击弹出按钮*/
+    function popBox() {
+        $('#pop_windows')
+            .modal({
+                closable  : false,
+                onDeny    : function(){
+                    EmptyBox();
+                    return true;
+
+                },
+                onApprove : function() {
+                    EmptyBox();
+                    return true;
+                }
+            })
+            .modal('setting', 'transition', 'scale')
+            .modal('toggle', '.ui .modal')
+        ;
+    }
+
+    /*点击关闭按钮*/
+    function closeBox() {
+        $('#pop_windows')
+            .modal('setting', 'transition', 'scale')
+            .modal('toggle', '.ui .modal')
+        ;
+        EmptyBox();
+    }
+
+    function FixUnixTime(data){
+        for(let i = 0; i < data.length;i++){
+            if(data[i]["starttime"]!=null){
+                data[i]["starttime"] = UnixToDate(data[i]["starttime"]);
+            }
+            if(data[i]["endtime"]!=null){
+                data[i]["endtime"] = UnixToDate(data[i]["endtime"]);
+            }
+        }
+        return data;
+    }
+</script>
+
+<script type="text/javascript">
+    var choose_table = new Vue({
+        el:"#choose_table",
+        data:{
+            columns:[],
+            all_data:[],
+            list_key:[],
+            arg_value:"",
+            select_arg:"coursename"
+        },
+        mounted(){
+            this.columns = ["课程名","课程学分","学生姓名","开始时间","结束时间","操作"];
+            this.list_key = ["coursename","coursecredit","username","starttime","endtime"];
+
+            axios.get('/choosecourse/getall')
+                .then((response)=>{
+                    if(top_nav.$data.username!="未登录账号" && top_nav.$data.username.length>1){
+                        this.all_data = response.data;
+                        this.all_data = FixUnixTime(this.all_data);
+                    }
+                }).catch(function(error){
+                alert(error);
+            });
+        },
+        methods:{
+            FreshTable:function(){
+                axios.get('/choosecourse/getall')
+                    .then((response)=>{
+                        //function 里面再用this的话 就是thisfunction的东西 不会this到外侧了
+                        this.all_data = response.data;
+                        this.all_data = FixUnixTime(this.all_data);
+                    }).catch(function(error){
+                    alert(error);
+                });
+            },
+            ChooseManage:function(id){
+                postdata = {"ccid" : id}
+                getdata = {}
+                axios.post("/choosecourse/getchoose",postdata).then(response=> {
+                    //getdata = response.data[0];
+                    getdata = FixUnixTime(response.data);
+                    Object.assign(Msg_popBox.$data , getdata[0]);
+                    popBox();
+                    console.log(response.data);
+
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            SelectChooseByArg:function(){
+                postdata = {"arg_value" : this.arg_value,
+                    "select_arg":this.select_arg
+                }
+                //postdata[this.select_arg] = this.arg_value;
+                axios.post("/choosecourse/findcourse",postdata).then(response=> {
+                    this.all_data = response.data;
+
+                }).catch(error=>{
+                    alert(error);
+                });
+            }
+        },
+        watch:{
+            all_data: {
+                handler(val, oldVal) {
+                    if (val.length < 1) {
+                        this.FreshTable();
+                    }
+                },
+                immediate: true
+            }
+        },
+        computed:{
+
+        }
+    });
+    var Msg_popBox = new Vue({
+        el:'#pop_windows',
+        data:{
+            coursecredit :"",
+            coursename :"",
+            username: "",
+            starttime:"",
+            endtime:"",
+            choosetime:"",
+            ccid:"",
+            uid:"",
+            coid:"",
+            courselist:{}
+
+        },
+        methods:{
+            DeleteChoose:function(){
+                postdata = {"ccid" : this.ccid}
+                axios.post("/choosecourse/deletechoose",postdata).then(response=> {
+                    closeBox();
+                    choose_table.FreshTable();
+                    alert(response.data.msg);
+
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            ClosePopBox:function(data){
+
+
+            },
+            GetCourseSelected:function(){
+                axios.get('/course/getall')
+                    .then((response)=>{
+                        this.courselist = response.data;
+                    }).catch(function(error){
+                    alert(error);
+                });
+            },
+            EmptyBox:function(){
+                //document.getElementById("user_form").reset();
+                this.coursecredit ="";this.coursename ="";
+                this.teachername="";this.teacherid="";
+                this.coid="";this.ccid="";this.uid="";
+                this.starttime ="";this.endtime="";
+            },
+            InsertChoose:function(){
+                postdata = {
+                    "uid":this.uid,
+                    "coid":this.coid,
+                    "starttime":DataToUnix(this.starttime),
+                    "endtime":DataToUnix(this.endtime),
+                }
+
+                axios.post("/choosecourse/insertchoose",postdata).then(response=> {
+                    let code = response.data.code;
+                    closeBox();
+                    choose_table.FreshTable();
+                    alert(response.data.msg);
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            UpdateChoose:function(){
+                postdata = {
+                    "uid":this.uid,
+                    "coid":this.coid,
+                    "starttime":DataToUnix(this.starttime),
+                    "endtime":DataToUnix(this.endtime),
+                    "ccid":this.ccid
+
+                }
+                axios.post("/choosecourse/updatechoose",postdata).then(response=> {
+                    let code = response.data.code;
+                    alert(response.data.msg);
+                    choose_table.FreshTable();
+                    closeBox();
+                }).catch(error=>{
+                    alert(error);
+                });
+            }
+
+        },mounted () {
+            axios.get('/course/getall')
+                .then((response)=>{
+                    this.courselist = response.data;
+                }).catch(function(error){
+                alert(error);
+            });
+            window.EmptyBox = this.EmptyBox;    // 方法赋值给window
+        }
+    });
+
+
+    var side_nav = new Vue({
+        el: '#show_nav',
+        data :{
+            navs:[{url : "index",name: "后台首页"}
+            ]
+
+        },
+        mounted(){
+            axios.get('/getnavbygroups')
+                .then(response=>(this.navs = response.data))
+                .catch(function(error){
+                    alert(error);
+                });
+        }
+
+    });
+
+    var top_nav = new Vue({
+        el: '#top_nav',
+        data :{
+            username:""
+
+        },
+        mounted(){
+            axios.get('/getuloginname')
+                .then(response=>{
+                    if(response.data.code==-1){
+                        alert("未登录账号！");
+                        window.location.href="/login";
+                    }
+                    this.username = response.data.msg;
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        methods:{
+            SignOut:function(){
+                axios.get('/signout')
+                    .then(response=> {
+                        let code = response.data.code;
+                        alert(response.data.msg);
+                        if(code==1){
+                            window.location.href="/index";
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+
+            }
+        }
+
+
+    });
+</script>
+</html>
