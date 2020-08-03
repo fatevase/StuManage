@@ -113,7 +113,7 @@
                                         {{course[key]}}
                                     </td>
                                     <td style="width:120px;">
-                                        <button v-if="course.selected" class="ui disabled button"  >已选择</button>
+                                        <button v-if="course.selected" class="ui disabled button">已选择</button>
                                         <button v-else="" class="ui orange button" @click="SelectCourse(course.coid,course.coursename)">选课</button>
                                     </td>
                                 </tr>
@@ -234,35 +234,6 @@
 </script>
 
 <script>
-    var student_basic_show = new  Vue({
-        el:'#student_basic_msg',
-        data:{
-            username:"",
-            basic_data:[]
-        },
-        mounted(){
-            axios.get('/users/getlogindata')
-                .then(response=>{
-                    if(response.data.code > 0){
-                        let getdata = response.data.data[0];
-                        this.username = getdata.username;
-                        getdata.schoolid = "学号:"+getdata.schoolid;
-                        getdata.department = "院系:"+getdata.department;
-                        getdata.uclass = "班级:"+getdata.uclass;
-                        delete getdata.username;delete getdata.sex;
-                        delete getdata.uid;delete getdata.age;
-                        delete getdata.hometown;
-                        this.basic_data = getdata;
-                    }
-                })
-                .catch(function(error){
-                    alert(error);
-                });
-        },
-        methods:{
-
-        }
-    });
 
     var choose_basic_show = new  Vue({
         el:'#choose_basic',
@@ -272,34 +243,49 @@
             columns :["课程名","课程学分","教师名",""],
             list_key :["coursename","coursecredit","teachername"],
         },
+        created(){
+               	axios.get('/course/getall')
+                   .then(response=>{
+                       if(response.data){
+                           let all_getdata = response.data;
+				            axios.get('/choosecourse/getusercourse')
+				                .then(response=>{
+				                    if(response.data.code>0){
+				                        let getdata = response.data.data;
+			                            for(let i =0; i < getdata.length;i++) {
+			                                getdata[i].starttime = UnixToDate(getdata[i].starttime);
+			                                getdata[i].endtime = UnixToDate(getdata[i].endtime);
+			                            }
+			                            let all_selectedid = [];
+			                            ShowSelectNumber(getdata.length);
+					                    for(let i =  0; i < getdata.length;i++){
+					                        all_selectedid[i] = getdata[i].coid;
+					                    }
+					                    for(let i =0; i < all_getdata.length;i++){
+					                        if(all_selectedid.includes(all_getdata[i].coid)){
+					                            all_getdata[i]["selected"] = true;
+					                        }else{
+					                            all_getdata[i]["selected"] = false;
+					                        }
+					                    }
+					                    this.all_course = all_getdata;
+					                    this.selected_course = getdata;
+				                    }
+				                })
+				                .catch(function(error){
+				                    alert(error);
+							})
+                       }
+                   })
+                   .catch(function(error){
+                       alert(error);
+	            });
+	            
+
+        },
         mounted(){
-            axios.get('/choosecourse/getusercourse')
-                .then(response=>{
-                    if(response.data.code > 0){
-                        let getdata = response.data.data;
-                        for(let i =0; i < getdata.length;i++) {
-                            getdata[i].starttime = UnixToDate(getdata[i].starttime);
-                            getdata[i].endtime = UnixToDate(getdata[i].endtime);
-                        }
-                        this.selected_course = getdata;
-                        ShowSelectNumber(getdata.length);
-                    }
-                })
-                .catch(function(error){
-                    alert(error);
-                });
 
-             axios.get('/course/getall')
-                .then(response=>{
-                    if(response.data){
-                        let getdata = response.data;
 
-                        this.all_course = getdata;
-                    }
-                })
-                .catch(function(error){
-                    alert(error);
-                });
         },
         methods:{
             GetAllChooseCourseId: function(){
@@ -323,16 +309,6 @@
                 popBox();
             },
             FreshTable:function(){
-                axios.get('/course/getall')
-                    .then(response=>{
-                        if(response.data){
-                            let getdata = response.data;
-                            this.all_course = getdata;
-                        }
-                    })
-                    .catch(function(error){
-                        alert(error);
-                    });
                 axios.get('/choosecourse/getusercourse')
                     .then(response=>{
                         if(response.data.code > 0){
@@ -348,7 +324,47 @@
                     .catch(function(error){
                         alert(error);
                     });
+                    
+                    axios.get('/course/getall')
+                    .then(response=>{
+                        if(response.data){
+                            let getdata = response.data;
+                            this.all_course = getdata;
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
             },
+            GetAllCourse:function(){
+	            axios.get('/course/getall')
+	                    .then(response=>{
+	                        if(response.data){
+	                            let getdata = response.data;
+	                            this.all_course = getdata;
+	                        }
+	                    })
+	                    .catch(function(error){
+	                        alert(error);
+	            });
+            },
+            GetAllSelected:function(){
+                   axios.get('/choosecourse/getusercourse')
+                    .then(response=>{
+                        if(response.data.code > 0){
+                            let getdata = response.data.data;
+                            for(let i =0; i < getdata.length;i++) {
+                                getdata[i].starttime = UnixToDate(getdata[i].starttime);
+                                getdata[i].endtime = UnixToDate(getdata[i].endtime);
+                            }
+                            this.selected_course = getdata;
+                            ShowSelectNumber(getdata.length);
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+            }
         },
         computed:{
             watch_handle(){
@@ -360,30 +376,38 @@
             }
         },
         watch:{
-            all_course: {
-                handler(val, oldVal) {
-                    let all_courseid = [];
-                    for(let i =  0; i < this.selected_course.length;i++){
-                        all_courseid[i] = this.selected_course[i].coid;
-                    }
-                    for(let i =0; i < val.length;i++){
-                        if(all_courseid.includes(val[i].coid)){
-                            val[i]["selected"] = true;
-                        }else{
-                            val[i]["selected"] = false;
-                        }
-                    }
-                },
-                immediate: true
-            },
+        	all_course: {  
+	        	handler(val,oldval){
+	        	console.log("all_course is change!");
+	        	console.log(val);
+	        	console.log(oldval);
+				this.$nextTick(function(){
+	                    let all_courseid = [];
+	                    for(let i = 0; i < val.length;i++){
+	                        all_courseid[i] = val[i].coid;
+	                    }
+	                    for(let i =0; i < selected_course.length;i++){
+	                        if(all_courseid.includes(this.selected_course[i].coid)){
+	                            this.all_course[i]["selected"] = true;
+	                        }else{
+	                            this.all_course[i]["selected"] = false;
+	                        }
+	                    }
+		    	});
+				},
+				immediate: true
+	    	},
             selected_course:{
-                handler(val, oldVal) {
+                handler(val, oldval) {
+                	console.log("selected_course is change!");
+		        	console.log(val);
+		        	console.log(oldval);
                     let all_courseid = [];
                     for(let i =  0; i < val.length;i++){
                         all_courseid[i] = val[i].coid;
                     }
                     for(let i =0; i < this.all_course.length;i++){
-                        if(all_courseid.includes(this.all_course.coid)){
+                        if(all_courseid.includes(this.all_course[i].coid)){
                             this.all_course[i]["selected"] = true;
                         }else{
                             this.all_course[i]["selected"] = false;
@@ -392,8 +416,51 @@
                 },
                 immediate: true
             }
+            
         }
     });
+    
+    
+    var student_basic_show = new  Vue({
+        el:'#student_basic_msg',
+        data:{
+            username:"",
+            basic_data:[]
+        },
+        mounted(){
+        /*
+            var sleep = function(time) {
+		    	var startTime = new Date().getTime() + parseInt(time, 10);
+			    while(new Date().getTime() < startTime) {}
+			};
+			sleep(100); // 延时函数，单位ms
+		*/
+		
+		axios.get('/users/getlogindata')
+                .then(response=>{
+                    if(response.data.code > 0){
+                        let getdata = response.data.data[0];
+                        this.username = getdata.username;
+                        getdata.schoolid = "学号:"+getdata.schoolid;
+                        getdata.department = "院系:"+getdata.department;
+                        getdata.uclass = "班级:"+getdata.uclass;
+                        delete getdata.username;delete getdata.sex;
+                        delete getdata.uid;delete getdata.age;
+                        delete getdata.hometown;
+                        this.basic_data = getdata;
+                    }
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+		
+            
+        },
+        methods:{
+
+        }
+    });
+    
 
     var Msg_popBox = new Vue({
         el:'#pop_windows',

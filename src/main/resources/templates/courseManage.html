@@ -12,6 +12,8 @@
     <script src="js/axios.min.js"></script>
     <script src="js/md5.js"></script>
     <script src="js/util.js"></script>
+    <link href="js/plugins/datatable/jquery.dataTables.css" rel="stylesheet" />
+    <script src="js/plugins/datatable/jquery.dataTables.js"></script>
 </head>
 
 <body>
@@ -30,13 +32,25 @@
         </a>
     </div>
 
-    <div id="show_data" class="ui sidebar inverted vertical menu">
-        <ul id="show_nav">
-            <li v-for="nav in navs">
-                <a :href="nav.url"  class="item">{{nav.name}}</a>
-            </li>
+    <div id="show_data" class="ui sidebar inverted vertical accordion menu">
 
-        </ul>
+        <div id="show_nav">
+
+            <div v-for="nav in navs">
+                <div v-if="nav.url=='userManage'" class="title">
+                    <a class="item">{{nav.name}}<i class="dropdown icon"></i></a>
+
+                </div>
+                <a  v-else="" :href="nav.url" class="item">{{nav.name}}</a>
+                <div v-if="nav.url=='userManage'" class="content">
+                    <ul class="menu">
+                        <a href="userManage_teacher" class=" item">教师管理</a>
+                        <a href="userManage_student" class="item">学生管理</a>
+                        <a href="userManage" class="item">全员管理</a>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div  class="pusher">
@@ -63,7 +77,7 @@
                 </div>
             </div>
 
-            <table class="ui single line table">
+            <table id="datatable" class="ui single line table">
                 <thead>
                 <tr>
                     <th v-for="key in columns">
@@ -106,7 +120,7 @@
                 </div>
 
                 <div class="ui  error message" display="none" id="sign-form-error"></div>
-
+            </div>
         </form>
 
     </div>
@@ -125,6 +139,9 @@
     function  ShowNav() {
         $('.ui.sidebar')
             .sidebar('toggle')
+        ;
+        $('.ui.accordion')
+            .accordion()
         ;
     }
     /*点击弹出按钮*/
@@ -169,16 +186,35 @@
             select_arg:"coursename"
         },
         mounted(){
-            this.columns = ["课程ID","课程名","课程学分","教师名","教师编号","操作"];
-            this.list_key = ["coid","coursename","coursecredit","teachername","teacherid"];
+            this.columns = ["课程ID","课程名","课程学分","操作"];
+            this.list_key = ["coid","coursename","coursecredit"];
             axios.get('/course/getall')
                 .then((response)=>{
                     //function 里面再用this的话 就是thisfunction的东西 不会this到外侧了
                     if(top_nav.$data.username!="未登录账号" && top_nav.$data.username.length>1){
                         this.all_data = response.data;
-
-                    }else{
-                        console.log("未登录");
+                        this.$nextTick(function(){
+	                        $('#datatable').DataTable({
+	                        	    "sPaginationType": "full_numbers",
+								    "iDisplayLength": 10,//每页显示的条数
+								    "bLengthChange": false,//是否可以动态调整每页的显示条数
+								    "bSearchable":false,
+								    "bFilter": false,
+								    "bLengthChange": false,
+								    "oSearch":{ "sSearch": "", "bRegex": false, "bSmart": true },
+								    "oLanguage" : {
+								        "sInfo" : "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
+								        "sInfoFiltered" : "数据表中共为 _MAX_ 条记录",
+								        "sInfoEmpty" : "显示0到0条记录",
+								        "oPaginate" : {
+								          "sFirst" : "首页",
+								          "sPrevious" : "上一页",
+								          "sNext" : "下一页",
+								          "sLast" : "末页"
+								        }
+								    }
+				           });
+                        });
                     }
                 }).catch(function(error){
                 alert(error);
@@ -208,13 +244,21 @@
                 });
             },
             SelectCourseByArg:function(){
-                postdata = {"arg_value" : this.arg_value,
-                    "select_arg":this.select_arg
+                postdata = {
+                "arg_value" : this.arg_value,
+                 "select_arg":this.select_arg
+                }
+                if(this.arg_value.length<1 || !this.arg_value){
+                    alert("输入参数不能为空");
+                    this.FreshTable();
+                    return;
                 }
                 //postdata[this.select_arg] = this.arg_value;
                 axios.post("/course/findcourse",postdata).then(response=> {
                     this.all_data = response.data;
-
+                    if(this.all_data.length<1){
+                        alert("您搜索的内容未找到！");
+                    }
                 }).catch(error=>{
                     alert(error);
                 });
@@ -263,6 +307,7 @@
                 //document.getElementById("user_form").reset();
                 this.coursecredit ="";this.coursename ="";
                 this.teachername="";this.teacherid="";
+                this.coid=""
             },
             InsertCourse:function(){
                 postdata = {

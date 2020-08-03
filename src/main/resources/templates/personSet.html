@@ -28,14 +28,25 @@
         </a>
     </div>
 
-    <div id="show_data" class="ui sidebar inverted vertical menu">
-        <ul id="show_nav">
-            <li v-for="nav in navs">
-                <a :href="nav.url"  class="item">{{nav.name}}</a>
+    <div id="show_data" class="ui sidebar inverted vertical accordion menu">
 
-            </li>
+        <div id="show_nav">
 
-        </ul>
+            <div v-for="nav in navs">
+                <div v-if="nav.url=='userManage'" class="title">
+                    <a class="item">{{nav.name}}<i class="dropdown icon"></i></a>
+
+                </div>
+                <a  v-else="" :href="nav.url" class="item">{{nav.name}}</a>
+                <div v-if="nav.url=='userManage'" class="content">
+                    <ul class="menu">
+                        <a href="userManage_teacher" class=" item">教师管理</a>
+                        <a href="userManage_student" class="item">学生管理</a>
+                        <a href="userManage" class="item">全员管理</a>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div  class="pusher">
@@ -151,11 +162,17 @@
         $('.menu .item')
             .tab()
         ;
+        $('.ui.accordion')
+            .accordion()
+        ;
     });
 
     function  ShowNav() {
         $('.ui.sidebar')
             .sidebar('toggle')
+        ;
+        $('.ui.accordion')
+            .accordion()
         ;
     }
 </script>

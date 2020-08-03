@@ -61,6 +61,14 @@ public class IndexController {
     public String UserManage(){
         return "userManage";
     }
+    @GetMapping("/userManage_student")
+    public String UserManageStudent(){
+        return "userManage_student";
+    }
+    @GetMapping("/userManage_teacher")
+    public String UserManageTeacher(){
+        return "userManage_teacher";
+    }
     @GetMapping("/personSet")
     public String PersonSet(){
         return "personSet";

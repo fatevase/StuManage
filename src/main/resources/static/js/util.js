@@ -33,3 +33,49 @@ function DataToUnix(time) {
     time = Date.parse(date)/1000; //只能精确到秒，毫秒将用0来代替---长度为10位
     return time;
 }
+
+function FilterArrayData(filter,arr){
+    let tempFilter = {};
+    for(key in filter) {
+        if(typeof(filter[key]) != "undefined" && typeof(filter[key]) != "null" && filter[key] != null && filter[key] != "") {
+            tempFilter[key] = filter[key];
+        }
+    }
+    //筛选
+    let resultArr = arr.filter(
+        (item) => {
+            let flag = false;
+            for(key in tempFilter) {
+                if(item[key].toString().indexOf(tempFilter[key].toString()) >= 0) {
+                    flag = true;
+                } else {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                return item;
+            }
+        }
+    );
+    return resultArr;
+
+}
+
+//返回之前没页面则返回首页
+function PushHistory() {
+    if (history.length < 2) {
+        var state = {
+            title: "index",
+            url: getHttpPrefix + "index"
+        };
+        window.history.pushState(state, "index", location.href);
+        state = {
+            title: "index",
+            url: ""
+        };
+        window.history.pushState(state, "index", "");
+    }
+    //lll("history.state" + history.state)
+    //console.log(history.state)
+}

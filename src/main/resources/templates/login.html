@@ -7,12 +7,14 @@
     <meta name="generator" content="Visual Studio 2015" />
     <title>Login</title>
     <meta name="description" content="Stagb Admin Template" />
+    <meta name="keywords" content="html5, ,semantic,ui, library, framework, javascript,jquery,template,blog,stagb,template" />
     <link href="css/semantic.min.css" rel="stylesheet" />
     <script src="js/jquery.min.js"></script>
     <script src="js/semantic.min.js"></script>
     <script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
     <script src="js/axios.min.js"></script>
     <script src="js/md5.js"></script>
+    <script src="js/util.js"></script>
 </head>
 <body>
 <div class="ui container" style="padding-top:10%">
@@ -121,16 +123,22 @@
                     "username" : this.username,
                     "password" : hex_md5(this.password)
                 }
+                
+
                 axios.post("/users/checkuserlogin",postdata).then(response=> {
-                    if (response.data.status !== 200) {
+                		
                         let code = response.data.code;
                         if(code == 1) {
-                            window.location.href="index"
+                        if (document.referrer.length < 1) {
+                        	window.location.href="index"
+                        }else{
+                        	window.location.href=document.referrer
+                        }
+                            
                         }
                         alert(response.data.msg);
-                    }
-                    this.username = "";
-                    this.password = "";
+	                    this.username = "";
+	                    this.password = "";
                 }).catch(error=>{
                     alert(error);
                 });

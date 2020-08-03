@@ -11,6 +11,9 @@ spring:
 mybatis:
   mapper-locations: classpath:mapper/*Mapper.xml
 
+thymeleaf:
+  cache: false
+
 logging:
   level:
     cn:
