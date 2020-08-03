@@ -1,0 +1,507 @@
+<html>
+<meta charset="utf-8">
+<head>
+    <meta charset="utf-8" />
+    <title>index</title>
+    <meta name="description" content="Stagb Admin Template" />
+    <meta name="keywords" content="html5, ,semantic,ui, library, framework, javascript,jquery,,stagb,template" />
+    <link href="css/semantic.min.css" rel="stylesheet" />
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/semantic.min.js"></script>
+    <script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/md5.js"></script>
+    <script src="js/util.js"></script>
+
+    <link href="js/plugins/datatable/jquery.dataTables.css" rel="stylesheet" />
+    <script src="js/plugins/datatable/jquery.dataTables.js"></script>
+
+</head>
+<body>
+<div>
+    <div id="top_nav" class="ui top stackable attached inverted menu">
+        <a class="item left"  onclick="ShowNav()">
+            <i class="list layout icon"></i>
+            菜单
+        </a>
+        <a class="item right" id="user-name">
+            {{username}}
+        </a>
+        <a class="item right" @click="SignOut">
+            <i class="sign out icon"></i>
+            登出
+        </a>
+    </div>
+
+    <div id="show_data" class="ui sidebar inverted vertical accordion menu">
+
+        <div id="show_nav">
+
+            <div v-for="nav in navs">
+                <div v-if="nav.url=='userManage'" class="title">
+                    <a class="item">{{nav.name}}<i class="dropdown icon"></i></a>
+
+                </div>
+                <a  v-else="" :href="nav.url" class="item">{{nav.name}}</a>
+                <div v-if="nav.url=='userManage'" class="content">
+                    <ul class="menu">
+                        <a href="userManage_teacher" class=" item">教师管理</a>
+                        <a href="userManage_student" class="item">学生管理</a>
+                        <a href="userManage" class="item">全员管理</a>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pusher">
+        <div>
+            <button class="ui button item right" onclick="popBox()">添加学生</button>
+        </div>
+        <div class="ui form" id="users_table">
+            <div class="field">
+                <div class="three fields">
+                    <div class="field">
+                        <input class="ui search dropdown" name="arg_value" v-model="arg_value"  placeholder="输入查询值"/>
+                    </div>
+                    <div class="field">
+                        <select name="select_arg" v-model="select_arg" >
+                            <option value="schoolid" >学号</option>
+                            <option value="groups" >权限</option>
+                            <option value="username" >姓名</option>
+                            <option value="admin" >ID</option>
+                            <option value="department" >院系</option>
+                            <option value="uclass" >班级</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <button class="ui button" @click="SelectUserByArg" >查询</button>
+                    </div>
+                </div>
+            </div>
+
+            <table id="datatable" class="ui single line table">
+                <thead>
+                <tr>
+                    <th v-for="key in columns">
+                        {{ key }}
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="entry in all_data">
+                    <td v-for="key in list_key">
+                        {{entry[key]}}
+                    </td>
+                    <td><button class="ui button" @click="UserManage(entry.uid)" >操作</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+</div>
+</body>
+<div class="ui small modal" id="pop_windows">
+    <i class="close icon" onclick="closeBox()"> </i>
+    <div class="header">
+        学生管理
+    </div>
+    <div class="content">
+        <form id="user_form" method="post" action="javascript:void(0)">
+            <div class="ui form stacked segment">
+                <div class="field">
+                    姓名： <input name="username" v-model="username" type="text"  placeholder="姓名"/>
+                </div>
+                <div class="field">
+                    学号： <input name="schoolid" v-model="schoolid" type="text"   placeholder="学号"/>
+                </div>
+                <div class="field">
+                    密码: <input name="password" v-model="password" type="password" placeholder="密码"/>
+                </div>
+                <div class="field">
+                    院系： <input name="department" v-model="department" type="text" placeholder="院系"/>
+                </div>
+                <div class="field">
+                    班级：<input name="uclass" v-model="uclass" type="text" placeholder="班级"/>
+                </div>
+                <div class="field">
+                    家庭住址：<input name="hometown" v-model="hometown" type="text" placeholder="住址"/>
+                </div>
+
+                <div class="field">
+                    年龄：<input name="age" v-model="age" type="text" placeholder="年龄"/>
+                </div>
+                <div class="field">
+                    性别:<select name="sex" v-model="sex" >
+                    <option value="男" >男</option>
+                    <option value="女" >女</option>
+                </select>
+                </div>
+
+                <div class="ui  error message" display="none" id="sign-form-error"></div>
+            </div>
+        </form>
+
+    </div>
+    <div class="actions">
+        <button class="ui green ok button" @click="UpdateUser" v-if="uid">更新</button>
+        <button class="ui green ok button" @click="InsertUser" v-else="">添加</button>
+        <button class="ui red cancel button" @click="DeleteUser"  v-if="uid">删除</button>
+    </div>
+</div>
+
+<div class="ui small modal" id="tip_window">
+    <div class="header">
+        提示
+    </div>
+    <div class="content">
+        <p>
+            {{msg}}
+        </p>
+    </div>
+    <div class="actions">
+        <div class="ui button">
+            好的
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="js/vue.js"  type="text/javascript" charset="utf-8"></script>
+<script  type="text/javascript">
+
+    function  ShowNav() {
+        $('.ui.sidebar')
+            .sidebar('toggle')
+        ;
+        $('.ui.accordion')
+            .accordion()
+        ;
+    }
+    /*点击弹出按钮*/
+    function popBox() {
+        $('#pop_windows')
+            .modal({
+                closable  : false,
+                onDeny    : function(){
+                    EmptyBox();
+                    return true;
+
+                },
+                onApprove : function() {
+                    EmptyBox();
+                    return true;
+                }
+            })
+            .modal('setting', 'transition', 'scale')
+            .modal('toggle', '.ui .modal')
+        ;
+    }
+
+    /*点击关闭按钮*/
+    function closeBox() {
+        $('#pop_windows')
+            .modal('setting', 'transition', 'scale')
+            .modal('hide', '.ui .modal')
+        ;
+        EmptyBox();
+    }
+</script>
+<script type="text/javascript">
+    var users_table = new Vue({
+        el:"#users_table",
+        data:{
+            columns:[],
+            all_data:[],
+            list_key:[],
+            arg_value:"",
+            select_arg:"schoolid",
+            selected_data:[]
+        },
+        created(){
+            this.columns = ["学生ID","学生名","学生编号","班级","院系","操作"];
+            this.list_key = ["uid","username","schoolid","uclass","department"];
+            postdata = {
+                "arg_value" : "student",
+                "select_arg":"groups"
+            }
+            axios.post("/users/finduser",postdata).then(response=> {
+                    //function 里面再用this的话 就是thisfunction的东西 不会this到外侧了
+                    if(top_nav.$data.username!="未登录账号" && top_nav.$data.username.length>1){
+                        this.all_data = response.data;
+                        if(this.all_data.length>0){
+                            this.$nextTick(function(){
+                                $('#datatable').DataTable({
+                                    "retrieve": true,
+                                    "sPaginationType": "full_numbers",
+                                    "iDisplayLength": 10,//每页显示的条数
+                                    "bLengthChange": false,//是否可以动态调整每页的显示条数
+                                    "bSearchable":false,
+                                    "bFilter": false,
+                                    "bLengthChange": false,
+                                    "oSearch":{ "sSearch": "", "bRegex": false, "bSmart": true },
+                                    "oLanguage" : {
+                                        "sInfo" : "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
+                                        "sInfoFiltered" : "数据表中共为 _MAX_ 条记录",
+                                        "sInfoEmpty" : "显示0到0条记录",
+                                        "oPaginate" : {
+                                            "sFirst" : "首页",
+                                            "sPrevious" : "上一页",
+                                            "sNext" : "下一页",
+                                            "sLast" : "末页"
+                                        }
+                                    }
+                                });
+                            });
+                        }
+                    }
+                }).catch(function(error){
+                alert(error);
+            });
+
+        },
+        mounted(){
+
+        },
+        methods:{
+            FreshTable:function(){
+                postdata = {
+                    "arg_value" : "student",
+                    "select_arg":"groups"
+                }
+                //postdata[this.select_arg] = this.arg_value;
+                axios.post("/users/finduser",postdata).then(response=> {
+                    this.all_data = response.data;
+                    if(this.all_data.length>0){
+                        this.$nextTick(function(){
+                            $('#datatable').DataTable({
+                                "retrieve": true,
+                                "sPaginationType": "full_numbers",
+                                "iDisplayLength": 10,//每页显示的条数
+                                "bLengthChange": false,//是否可以动态调整每页的显示条数
+                                "bSearchable":false,
+                                "bFilter": false,
+                                "bLengthChange": false,
+                                "oSearch":{ "sSearch": "", "bRegex": false, "bSmart": true },
+                                "oLanguage" : {
+                                    "sInfo" : "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
+                                    "sInfoFiltered" : "数据表中共为 _MAX_ 条记录",
+                                    "sInfoEmpty" : "显示0到0条记录",
+                                    "oPaginate" : {
+                                        "sFirst" : "首页",
+                                        "sPrevious" : "上一页",
+                                        "sNext" : "下一页",
+                                        "sLast" : "末页"
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            UserManage:function(id){
+                postdata = {"uid" : id}
+                getdata = {}
+                axios.post("/users/getuser",postdata).then(response=> {
+                    getdata = response.data[0];
+                    Object.assign(Msg_popBox.$data, response.data[0]);
+                    Msg_popBox.$data.oldpassowrd = response.data[0].password;
+                    // 记录老数据便于之后进行传值
+                    this.selected_data = response.data[0];
+                    console.log(response.data);
+                    popBox();
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            SelectUserByArg:function(){
+                postdata = {
+                    "arg_value" : this.arg_value,
+                    "select_arg":this.select_arg
+                }
+                if(this.arg_value.length<1 || !this.arg_value){
+                    alert("输入参数不能为空");
+                    this.FreshTable();
+                    return;
+                }
+                //postdata[this.select_arg] = this.arg_value;
+                axios.post("/users/finduser",postdata).then(response=> {
+                    filter = {
+                        groups:"student"
+                    }
+                    this.all_data = FilterArrayData(filter,response.data);
+                    if(this.all_data.length<1){
+                        alert("您搜索的内容未找到！");
+                    }
+                }).catch(error=>{
+                    alert(error);
+                });
+            }
+        },
+        watch:{
+            all_data: {
+
+                handler(val, oldVal) {
+                    if (val.length < 1) {
+                        this.FreshTable();
+                    }
+                },
+                immediate: true
+            }
+        }
+    });
+    var Msg_popBox = new Vue({
+        el:'#pop_windows',
+        data:{
+            username :"",
+            password :"",
+            schoolid: "",
+            sex:"",
+            age:"",
+            hometown:"",
+            uclass:"",
+            department:"",
+            uid:"",
+            groups:"student",
+            oldpassowrd:""
+        },
+        methods:{
+            DeleteUser:function(){
+                postdata = {"uid" : this.uid}
+                axios.post("/users/deleteuser",postdata).then(response=> {
+                    closeBox();
+                    alert(response.data.msg);
+                    users_table.FreshTable();
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            ClosePopBox:function(){
+
+            },
+            EmptyBox:function(){
+                //document.getElementById("user_form").reset();
+                this.username ="";this.password ="";this.oldpassowrd="";
+                this.schoolid="";this.sex="";
+                this.age="";this.hometown="";
+                this.uclass="";this.department="";
+                this.uid="";this.groups="student";
+
+            },
+            InsertUser:function(){
+                postdata = {
+                    "username":this.username,
+                    "password":hex_md5(this.password),
+                    "schoolid":this.schoolid,
+                    "sex":this.sex,
+                    "age":this.age,
+                    "hometown":this.hometown,
+                    "uclass":this.uclass,
+                    "department":this.department,
+                    "groups":this.groups
+                }
+
+                axios.post("/users/insertuser",postdata).then(response=> {
+                    let code = response.data.code;
+                    closeBox();
+                    users_table.FreshTable();
+                    alert(response.data.msg);
+                }).catch(error=>{
+                    alert(error);
+                });
+            },
+            UpdateUser:function(){
+                postdata = {
+                    "username":this.username,
+                    "password":this.password == this.oldpassowrd?this.password:hex_md5(this.password),
+                    "schoolid":this.schoolid,
+                    "sex":this.sex,
+                    "age":this.age,
+                    "hometown":this.hometown,
+                    "uclass":this.uclass,
+                    "department":this.department,
+                    "uid":this.uid
+                }
+                axios.post("/users/updateuser",postdata).then(response=> {
+                    let code = response.data.code;
+                    alert(response.data.msg);
+                    users_table.FreshTable();
+                    closeBox();
+                }).catch(error=>{
+                    alert(error);
+                });
+            }
+
+        },mounted() {
+            window.EmptyBox = this.EmptyBox;     //方法赋值给window
+        }
+    });
+
+    var show_list = new Vue({
+        el: '#show_nav',
+        data :{
+            navs:[{url : "index",name: "后台首页"}
+            ]
+
+        },
+        mounted(){
+            axios.get('/getnavbygroups')
+                .then(response=>(this.navs = response.data))
+                .catch(function(error){
+                    alert(error);
+                });
+        }
+
+    });
+
+    var top_nav = new Vue({
+        el: '#top_nav',
+        data :{
+            username:""
+
+        },
+        created(){
+            axios.get('/getuloginname')
+                .then(response=>{
+                    if(response.data.code==-1){
+                        alert("未登录账号！");
+                        window.location.href="/login";
+                    }
+                    this.username = response.data.msg;
+                })
+                .catch(function(error){
+                    alert(error);
+                });
+        },
+        mounted(){
+
+        },
+        methods:{
+            SignOut:function(){
+                axios.get('/signout')
+                    .then(response=> {
+                        let code = response.data.code;
+                        alert(response.data.msg);
+                        if(code==1){
+                            window.location.href="/index";
+                        }
+                    })
+                    .catch(function(error){
+                        alert(error);
+                    });
+            }
+        }
+
+
+    });
+
+</script>
+</html>
+
